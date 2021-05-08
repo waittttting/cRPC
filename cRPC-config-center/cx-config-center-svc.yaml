@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: cx-rpc-base
+  name: cx-config-center-svc
+  labels:
+    app: cx-config-center-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: cx-config-center
+  ports:
+    - protocol : TCP
+      port: 8000
+      targetPort: 8000

@@ -1,0 +1,2 @@
+- 服务启动参数 `-config ./config_center/conf/ccs.toml`
+- 部署在 k8s 上，部署多个节点，利用 k8s 的 service 将服务暴露出来，同时保证服务的高可用

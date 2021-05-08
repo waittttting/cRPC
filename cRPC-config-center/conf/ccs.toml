@@ -1,0 +1,15 @@
+[server]
+    receiveSocketChanLen = 100
+    receiveSocketTimeoutMs = 200
+    tcpPort = 7000
+    httpPort = 8000
+
+[mysql]
+    host = "172.17.0.1:3306"
+    user = "root"
+    password = "123456"
+
+[redis]
+    host = "redis.local.com:6379"
+    pwd = ""
+    index = 0
