@@ -1,0 +1,10 @@
+[client]
+    serverName = "mp-user"
+    serverVersion = "v0.0.2"
+    configCenterHost = "http://localhost:8000"
+
+[server]
+    httpPort = 8009
+    tcpPort = 7009
+    rpcOpen = true
+    receiveSocketChanLen = 100

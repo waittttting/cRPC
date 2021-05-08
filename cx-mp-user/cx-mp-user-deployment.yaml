@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment  # 类型是部署
+metadata:
+  namespace: cx-rpc-business
+  name: cx-mp-user-deployment
+spec:
+  selector:
+    matchLabels:
+      app: cx-mp-user
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+       name: cx-mp-user
+       labels:
+         app: cx-mp-user
+    spec:
+      containers:
+        - name: cx-mp-user
+          image: registry.local.com/cx-mp-user:latest
+          imagePullPolicy: Always
+#          resources:
+#            limits:
+#              cpu: "0.25"
+#              memory: 64Mi
+#            requests:
+#              cpu: "0.25"
+#              memory: 64Mi
