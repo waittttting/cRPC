@@ -1,12 +1,9 @@
 FROM golang:latest as builder
 
-COPY . /app
+COPY cx-control-center /app/cx-control-center
+COPY conf/ccs.toml /app/conf/ccs.toml
 WORKDIR /app
 
-RUN go env -w GOPROXY="https://goproxy.cn,direct"
-RUN go env -w GO111MODULE=on
-
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -o cx-control-center main.go
 FROM alpine:latest
 
 RUN mkdir /app
