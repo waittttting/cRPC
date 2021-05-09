@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: cx-rpc-base
+  name: cx-control-center-svc
+  labels:
+    app: cx-control-center-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: cx-control-center
+  ports:
+    - protocol : TCP
+      port: 9001
+      targetPort: 9001

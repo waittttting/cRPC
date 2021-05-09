@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment  # 类型是部署
+metadata:
+  namespace: cx-rpc-base
+  name: cx-contol-center-deployment
+spec:
+  selector:
+    matchLabels:
+      app: cx-control-center
+  replicas: 5
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+       name: cx-control-center
+       labels:
+         app: cx-control-center
+    spec:
+      containers:
+        - name: cx-control-center
+          image: registry.local.com/cx-control-center:latest
+          imagePullPolicy: Always
+#          resources:
+#            limits:
+#              cpu: "0.25"
+#              memory: 64Mi
+#            requests:
+#              cpu: "0.25"
+#              memory: 64Mi
