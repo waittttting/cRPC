@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment  # 类型是部署
 metadata:
-  namespace: cx-rpc-base
-  name: cx-control-center-deployment
+  namespace: cx-rpc-business
+  name: cx-mp-gateway-deployment
 spec:
   selector:
     matchLabels:
-      app: cx-control-center
+      app: cx-mp-gateway
   replicas: 1
   strategy:
     type: Recreate
   template:
     metadata:
-       name: cx-control-center
+       name: cx-mp-gateway
        labels:
-         app: cx-control-center
+         app: cx-mp-gateway
     spec:
       containers:
-        - name: cx-control-center
-          image: registry.local.com/cx-control-center:latest
+        - name: cx-mp-gateway
+          image: registry.local.com/cx-mp-gateway:latest
           imagePullPolicy: Always
 #          resources:
 #            limits:

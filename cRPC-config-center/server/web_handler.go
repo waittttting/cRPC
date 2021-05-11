@@ -127,7 +127,7 @@ func getServersIPList(cca *model.ControlCenterAddr, serverNameList string) ([]*m
 	params := map[string]string{
 		"serverNameList" : serverNameList,
 	}
-	address := "http://" + cca.Host + ":" + cca.HttpPort + "/get/serverIpLists"
+	address := "http://" + "cx-control-center-svc" + ":" + cca.HttpPort + "/get/serverIpLists"
 	result, err := http2.Post(address, params)
 	if err != nil {
 		return nil, err

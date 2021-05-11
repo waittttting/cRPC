@@ -10,6 +10,6 @@
     password = "123456"
 
 [redis]
-    host = "redis.local.com:6379"
+    host = "host.docker.internal:6379"
     pwd = ""
     index = 0

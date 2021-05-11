@@ -1,0 +1,10 @@
+[client]
+    serverName = "mp-gateway"
+    serverVersion = "v0.0.2"
+    configCenterHost = "http://localhost:8000"
+
+[server]
+    httpPort = 8008
+    tcpPort = 7008
+    rpcOpen = false
+    receiveSocketChanLen = 100

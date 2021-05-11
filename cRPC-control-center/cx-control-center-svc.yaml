@@ -10,6 +10,11 @@ spec:
   selector:
     app: cx-control-center
   ports:
-    - protocol : TCP
+    - protocol: TCP
       port: 9001
       targetPort: 9001
+      name: tcp-port
+    - protocol: TCP
+      port: 7001
+      targetPort: 7001
+      name: http-port

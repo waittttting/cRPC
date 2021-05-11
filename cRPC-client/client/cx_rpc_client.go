@@ -53,7 +53,7 @@ func (rc *RpcClient) Start() {
 	// 发送 http 请求获取 config file
 	cloudConfig, err := rc.getServerConfig()
 	if err != nil {
-		logrus.Fatalf("getServerConfig err:[v]", err)
+		logrus.Fatalf("getServerConfig err:[%v]", err)
 	}
 	rc.cloudConfig = cloudConfig
 	// 连接控制中心
@@ -128,7 +128,7 @@ func (rc *RpcClient) createAndRegister(host string) (*tcp.Connection, error) {
 	// 创建注册消息
 	p, err := tcp.MsgRegisterPing(rc.config.Client.ServerName, rc.config.Client.ServerVersion, rc.config.Server.TcpPort)
 	if err != nil {
-		logrus.Errorf("init MsgRegisterPing failed err:[v]", err)
+		logrus.Errorf("init MsgRegisterPing failed err:[%v]", err)
 		return nil, err
 	}
 	// 发送自身的信息到订阅的服务
@@ -141,7 +141,7 @@ func (rc *RpcClient) createAndRegister(host string) (*tcp.Connection, error) {
 	// 接收回复的消息
 	_, err = conn.Receive(0 * time.Second)
 	if err != nil {
-		logrus.Errorf("register failed err:[v]", err)
+		logrus.Errorf("register failed err:[%v]", err)
 		return nil, err
 	}
 	return conn, nil
