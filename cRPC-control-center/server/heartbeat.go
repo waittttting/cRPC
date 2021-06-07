@@ -12,24 +12,24 @@ func (ccs *ControlCenterServer) heartbeatTimeWheelStart() {
 			}
 		}()
 		for inter := range ccs.heartbeatTimeoutChan {
-			sc := inter.(*serviceConn)
+			sc := inter.(*serverConn)
 			logrus.Infof("heartbeat timeout %s", sc.gid.String())
 			// todo: 接收消息超时的逻辑是否写全
-			sc.LetScOffLine("heartbeat timeout")
+			sc.letScOffLine("heartbeat timeout")
 			ccs.timeWheel.Delete(sc)
 		}
 	}()
 }
 
-func (ccs *ControlCenterServer) addToHeartbeatTimeWheel(client *serviceConn) {
+func (ccs *ControlCenterServer) addToHeartbeatTimeWheel(client *serverConn) {
 	ccs.timeWheel.Add(client, 5)
 }
 
-func (ccs *ControlCenterServer) refreshHeartbeat(client *serviceConn) {
+func (ccs *ControlCenterServer) refreshHeartbeat(client *serverConn) {
 	logrus.Infof("received heartbeat:[%v]", client.gid.String())
 	ccs.timeWheel.Refresh(client, 5)
 }
 
-func (ccs *ControlCenterServer) deleteHeartbeat(client *serviceConn) {
+func (ccs *ControlCenterServer) deleteHeartbeat(client *serverConn) {
 	ccs.timeWheel.Delete(client)
 }

@@ -6,7 +6,10 @@ import (
 	"time"
 )
 
-type serviceConn struct {
+/**
+ * @Description: 与其他服务的长连接的结构体
+ */
+type serverConn struct {
 	serviceName    string
 	serviceVersion string
 	conn           *tcp.Connection
@@ -18,7 +21,7 @@ type serviceConn struct {
 	redisValue     string
 }
 
-func (sc *serviceConn) loop() {
+func (sc *serverConn) loop() {
 
 	// todo: 上线记录
 	sc.open()
@@ -36,28 +39,28 @@ func (sc *serviceConn) loop() {
 		// 刷新心跳
 		sc.handleHeartbeat(msg)
 	}
-	logrus.Infof("complete loop gid: %s", sc.gid.String())
+	logrus.Infof("complete loop gid: [%s]", sc.gid.String())
 	// 关闭 sc
 	sc.close()
 }
 
-
-func (sc *serviceConn) open() {
-	logrus.Infof("service conn onLine")
-	RedisPubOnLine()
+func (sc *serverConn) open() {
+	logrus.Infof("service conn onLine, git = [%v]", sc.gid)
+	redisPubOnLine(sc.gid)
 }
 
 /**
- * @Description: 使节点下线，供外部调用
+ * @Description:
  * @receiver sc
+ * @param cause
  */
-func (sc *serviceConn) LetScOffLine(cause string) {
+func (sc *serverConn) letScOffLine(cause string) {
 	logrus.Infof("service conn offLine, cause:[%v]", cause)
 	sc.exit = true
-	sc.conn.Close() // 触发 sc.loop 内的 for 循环执行一次
+	sc.conn.Close() // 当调用 sc.conn.Close() 时，sc.conn.Receive 回直接报错，此时 exit 已经是 true，结束 loop 循环
 }
 
-func (sc *serviceConn) handleHeartbeat(msg *tcp.Message) {
+func (sc *serverConn) handleHeartbeat(msg *tcp.Message) {
 
 	sc.heartbeatTime = time.Now()
 	sc.ccs.refreshHeartbeat(sc)
@@ -68,7 +71,7 @@ func (sc *serviceConn) handleHeartbeat(msg *tcp.Message) {
  * @Description: sc.close 与 sc.offLine 语意的区别: close 是清理 ccs 内 sc 对应的信息，LetScOffLine 是外部 让 sc 关闭
  * @receiver sc
  */
-func (sc *serviceConn) close() {
+func (sc *serverConn) close() {
 
 	// 删除 ccs 内的 sc 信息
 	sc.ccs.lock.Lock()
@@ -86,13 +89,12 @@ func (sc *serviceConn) close() {
 		curS = append(curS[:index], curS[index+1:]...)
 	}
 
-	sc.ccs.deleteHeartbeat(sc) // 清除 time wheel
+	sc.ccs.deleteHeartbeat(sc)                                      // 清除 time wheel
 	err := RedisOp(sc.redisKey, sc.redisValue, redisOpSRemServerIp) // 清除 redis 信息
 	if err != nil {
 		// 报警，人工介入
 		logrus.Errorf("delete client ip from redis error:[%v]", err)
 	}
-
 	// 通知其他 ccs 上 <订阅了本服务的服务>，本服务下线
-	RedisPubOffline()
+	redisPubOffline(sc.gid)
 }

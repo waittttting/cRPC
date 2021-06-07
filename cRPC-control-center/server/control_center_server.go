@@ -15,21 +15,19 @@ import (
 )
 
 type ControlCenterServer struct {
-
 	config *conf.CCSConf
 	// 接收 socket 的队列
 	receiveSocketChan chan *net.TCPConn
 	// 存储注册到本节点的服务的 名字和 连接的关系
-	clientMap map[string][]*serviceConn
-	lock sync.RWMutex
-	receiveServiceConnChan chan *serviceConn
-	timeWheel *twheel.TimeWheel
-	heartbeatTimeoutChan chan interface{}
-	redisMsgChan <-chan *redis.Message
+	clientMap              map[string][]*serverConn
+	lock                   sync.RWMutex
+	receiveServiceConnChan chan *serverConn
+	timeWheel              *twheel.TimeWheel
+	heartbeatTimeoutChan   chan interface{}
+	redisMsgChan           <-chan *redis.Message
 }
 
 func NewControlCenterServer(config *conf.CCSConf, ch <-chan *redis.Message) *ControlCenterServer {
-
 
 	heartbeatChan := make(chan interface{}, config.TimeWheel.NoticeChanLen)
 	tw, err := twheel.New(config.TimeWheel.Cap, heartbeatChan)
@@ -37,13 +35,13 @@ func NewControlCenterServer(config *conf.CCSConf, ch <-chan *redis.Message) *Con
 		logrus.Fatalf("init time wheel err %v", err)
 	}
 	return &ControlCenterServer{
-		config: config,
-		receiveSocketChan: make(chan *net.TCPConn, config.Server.ReceiveSocketChanLen),
-		receiveServiceConnChan: make(chan *serviceConn, config.Server.ReceiveServiceConnChanLen),
-		clientMap: make(map[string][]*serviceConn),
-		timeWheel: tw,
-		heartbeatTimeoutChan: heartbeatChan,
-		redisMsgChan: ch,
+		config:                 config,
+		receiveSocketChan:      make(chan *net.TCPConn, config.Server.ReceiveSocketChanLen),
+		receiveServiceConnChan: make(chan *serverConn, config.Server.ReceiveServiceConnChanLen),
+		clientMap:              make(map[string][]*serverConn),
+		timeWheel:              tw,
+		heartbeatTimeoutChan:   heartbeatChan,
+		redisMsgChan:           ch,
 	}
 }
 
@@ -76,10 +74,10 @@ func (ccs *ControlCenterServer) clusterCommunication() {
 
 func (ccs *ControlCenterServer) acceptSocket() {
 
-	tcp.AcceptSocket(strconv.Itoa(ccs.config.Server.TcpPort), ccs.receiveSocketChan, 3 * time.Second)
+	tcp.AcceptSocket(strconv.Itoa(ccs.config.Server.TcpPort), ccs.receiveSocketChan, 3*time.Second)
 }
 
-func (ccs *ControlCenterServer)handleSocket() {
+func (ccs *ControlCenterServer) handleSocket() {
 
 	go func() {
 		defer func() {
@@ -94,7 +92,7 @@ func (ccs *ControlCenterServer)handleSocket() {
 	}()
 }
 
-func (ccs *ControlCenterServer)checkRegisterMsg(socket *net.TCPConn) {
+func (ccs *ControlCenterServer) checkRegisterMsg(socket *net.TCPConn) {
 
 	// 在注册的过程中，如果出现了 err 直接 调用 socket.Close(),
 	// 注册到 redis 失败 结束本次注册，关闭 socket，等待 client 重连
@@ -118,12 +116,12 @@ func (ccs *ControlCenterServer)checkRegisterMsg(socket *net.TCPConn) {
 		return
 	}
 
-	newSc := &serviceConn{
-		serviceName: msg.Header.ServerName,
+	newSc := &serverConn{
+		serviceName:    msg.Header.ServerName,
 		serviceVersion: msg.Header.ServerVersion,
-		conn: conn,
-		gid: tcp.NewGid(msg.Header.ServerName, msg.Header.ServerVersion, conn.IP, portConf.Port),
-		ccs: ccs, // todo: 是否可以循环引用
+		conn:           conn,
+		gid:            tcp.NewGid(msg.Header.ServerName, msg.Header.ServerVersion, conn.IP, portConf.Port),
+		ccs:            ccs, // todo: 是否可以循环引用
 	}
 
 	// 注册 Service 的 IP 注册到 redis, key = serviceName + serviceVersion
@@ -139,6 +137,7 @@ func (ccs *ControlCenterServer)checkRegisterMsg(socket *net.TCPConn) {
 	newSc.redisKey = newSc.gid.ServiceName
 	newSc.redisValue = string(jgid)
 
+	// 加入到 redis 中
 	err = RedisOp(newSc.redisKey, newSc.redisValue, redisOpSAddServerIp)
 	if err != nil {
 		logrus.Errorf("register to redis error: [%v]", err)
@@ -162,7 +161,7 @@ func (ccs *ControlCenterServer)checkRegisterMsg(socket *net.TCPConn) {
 	ccs.lock.Lock()
 	defer ccs.lock.Unlock()
 	if v, ok := ccs.clientMap[newSc.serviceName]; !ok {
-		scs := []*serviceConn{newSc}
+		scs := []*serverConn{newSc}
 		ccs.clientMap[newSc.gid.ServiceName] = scs
 	} else {
 		v = append(v, newSc)
@@ -175,7 +174,7 @@ func (ccs *ControlCenterServer)checkRegisterMsg(socket *net.TCPConn) {
 	timer := time.NewTimer(1 * time.Second)
 	select {
 	case ccs.receiveServiceConnChan <- newSc:
-	case <- timer.C:
+	case <-timer.C:
 		logrus.Errorf("send to receiveServiceConnChan timeout %s", newSc.gid.String())
 	}
 }
@@ -195,9 +194,8 @@ func (ccs *ControlCenterServer) handleServiceConn() {
 	}()
 }
 
-
 // todo: 没有使用 Gossip 导致的引入了 redis 的订阅, 需要保证消息的可靠性，增加了架构的复杂性，使用 Gossip 则，则会通过 Gossip 协议主键通知到其他的服务
-func (ccs *ControlCenterServer) handleRedisMsg()  {
+func (ccs *ControlCenterServer) handleRedisMsg() {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -205,10 +203,8 @@ func (ccs *ControlCenterServer) handleRedisMsg()  {
 			}
 		}()
 		for msg := range ccs.redisMsgChan {
-			// todo: 收到消息后看那些服务订阅了本条消息的服务，然后将这条消息通过 tcp 长连接推送到这些服务上
+			// todo: 收到 服务 新增或者减少节点的 msg 后，看看哪些服务订阅了本条消息中有节点变化的服务，然后将这条消息通过 tcp 长连接推送到这些服务的各个节点上
 			println(msg.Channel, msg.Payload)
 		}
 	}()
 }
-
-
