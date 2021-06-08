@@ -14,7 +14,7 @@ require (
 
 replace (
 	github.com/coreos/go-systemd => github.com/coreos/go-systemd/v22 v22.0.0
-	github.com/waittttting/cRPC-client => /Users/changjinsheng/go/go_module/cRPC-client
-	github.com/waittttting/cRPC-common => /Users/changjinsheng/go/go_module/cRPC-common
+	github.com/waittttting/cRPC-client => ../cRPC-client
+    github.com/waittttting/cRPC-common => ../cRPC-common
 	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 )

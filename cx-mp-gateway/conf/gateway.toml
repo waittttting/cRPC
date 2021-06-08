@@ -8,3 +8,4 @@
     tcpPort = 7008
     rpcOpen = false
     receiveSocketChanLen = 100
+    receiveTcpMsgChanLen = 100
