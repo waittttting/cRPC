@@ -15,16 +15,15 @@ type serverConn struct {
 	receiveMsgChan chan *tcp.Message
 }
 
-func newServerConn(serviceName, serviceVersion string, reveiveMsgChanLen int, connection *tcp.Connection) serverConn {
-
-	gid := tcp.GID{
-		ServiceName: serviceName,
-		ServiceVersion: serviceVersion,
-	}
+func newServerConn(
+	gid tcp.GID,
+	connection *tcp.Connection,
+	msgChan chan *tcp.Message) serverConn {
+	
 	sc := serverConn{
 		gid: gid,
 		conn: connection,
-		receiveMsgChan: make(chan *tcp.Message, reveiveMsgChanLen),
+		receiveMsgChan: msgChan,
 	}
 	return sc
 }
@@ -44,8 +43,9 @@ func (sc *serverConn) heartbeat() {
 		<- ticker
 		err := sc.conn.Send(tcp.MsgHeartbeat())
 		if err != nil {
-			logrus.Infof("heartbeat err : [%v]", err)
+			logrus.Errorf("heartbeat err : [%v]", err)
 		}
+		logrus.Infof("...send heartbeat... [%v]", sc.gid.ServiceName)
 	}
 }
 
@@ -63,6 +63,7 @@ func (sc *serverConn) loop() {
 			logrus.Errorf("receive msg in loop occurred err : %v", err)
 			sc.exit = true
 		}
+		logrus.Infof("server_comm loop header: %s, %v", msg.Header.ServerName, msg.Header.ServerName)
 		timer := time.NewTimer( 2 * time.Second)
 		select {
 		case sc.receiveMsgChan <- msg:

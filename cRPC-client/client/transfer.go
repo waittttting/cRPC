@@ -5,7 +5,6 @@ import (
 	"github.com/waittttting/cRPC-common/cerr"
 	"github.com/waittttting/cRPC-common/snowFlake"
 	"github.com/waittttting/cRPC-common/tcp"
-	"math/rand"
 	"time"
 )
 
@@ -39,11 +38,14 @@ func (rc *RpcClient) Send(message *tcp.Message) (*tcp.Message, error) {
 	}
 
 	// 随机获取连接 random
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	index := r.Intn(len(conns))
-	conn := conns[index]
 
-	if conn != nil {
+	var sp *serverPackage
+	for conn := range conns {
+		sp = conns[conn]
+		break
+	}
+
+	if sp != nil {
 		logrus.Error(cerr.ErrConnNotFound.ErrMsg)
 		return nil, cerr.ErrConnNotFound
 	}

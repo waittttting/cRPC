@@ -14,9 +14,9 @@ import (
 func (rc *RpcClient) getServerConfig() (*model.CloudConfigInfo, error) {
 
 	params := map[string]string{
-		"server_name" : rc.config.Client.ServerName,
-		"server_version" : rc.config.Client.ServerVersion}
-	result, err := http.Post(rc.config.Client.ConfigCenterHost + "/get/config", params)
+		"server_name" : rc.localConfig.Client.ServerName,
+		"server_version" : rc.localConfig.Client.ServerVersion}
+	result, err := http.Post(rc.localConfig.Client.ConfigCenterHost + "/get/config", params)
 	if err != nil {
 		return nil, err
 	}
