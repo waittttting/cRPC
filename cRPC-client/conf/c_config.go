@@ -20,4 +20,5 @@ type Server struct {
 	RpcOpen bool
 	// 接收 socket 队列的长度
 	ReceiveSocketChanLen int
+	ReceiveTcpMsgChanLen int
 }
