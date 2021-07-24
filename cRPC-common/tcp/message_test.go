@@ -1,6 +1,9 @@
 package tcp
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestMessageTrans(t *testing.T) {
 
@@ -27,5 +30,5 @@ func TestMessageTrans(t *testing.T) {
 
 	testMsgByte := transMsgToByte(&msg)
 	header := transByteToHeader(testMsgByte[0:400])
-	println(header)
+	fmt.Println(header)
 }

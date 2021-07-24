@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/waittttting/cRPC-common/model"
 	"github.com/waittttting/cRPC-common/tcp"
+	"runtime/debug"
 )
 
 // 处理本服务接收到的 socket
@@ -50,10 +51,10 @@ func (rc *RpcClient) handleReceivedSocket()  {
 			return
 		}
 
+		// 创建 serverConn
 		gid := tcp.NewGid(msg.Header.ServerName, msg.Header.ServerVersion, conn.IP, portConf.Port)
-
 		receiveMsgChan := make(chan *tcp.Message, rc.localConfig.Server.ReceiveTcpMsgChanLen)
-		newSc := newServerConn(*gid, conn, receiveMsgChan)
+		newSc := newServerConn(*gid, conn, receiveMsgChan, rc)
 		sp := &serverPackage{
 			sc: &newSc,
 			receiveMsgChan: receiveMsgChan,
@@ -63,6 +64,8 @@ func (rc *RpcClient) handleReceivedSocket()  {
 		if servers, ok := rc.subConnMap[gid.ServiceName]; ok {
 			if _, ok := servers[gid.String()]; !ok {
 				servers[gid.String()] = sp
+			} else {
+				return
 			}
 		} else {
 			subServerConns := make(map[string]*serverPackage)
@@ -71,17 +74,24 @@ func (rc *RpcClient) handleReceivedSocket()  {
 		}
 		rc.scsLock.Unlock()
 		newSc.StartLoop(false)
+
 		go handleMsg(receiveMsgChan)
 	}
 }
+
+/**
+ * @Description:
+ * @param receiveMsgChan
+ */
 func handleMsg(receiveMsgChan chan *tcp.Message) {
 	logrus.Info("begin to handle msg")
 	defer func() {
 		if err := recover(); err != nil {
+			debug.PrintStack()
 			logrus.Errorf("handleMsg goroutine error %v", err)
 		}
 	}()
 	for msg := range receiveMsgChan {
-		logrus.Infof("received msg from : [%v]", msg.Header.ServerVersion)
+		logrus.Infof("received msg from : [%v]", msg)
 	}
 }

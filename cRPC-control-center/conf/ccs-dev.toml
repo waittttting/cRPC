@@ -1,0 +1,14 @@
+[server]
+    tcpPort = 9001
+    httpPort = 7001
+    receiveSocketChanLen = 100
+    receiveServiceConnChanLen = 120
+
+[redis]
+    host = "redis.local.com:6379"
+    pwd = ""
+    index = 0
+
+[timeWheel]
+    cap = 20
+    noticeChanLen = 200

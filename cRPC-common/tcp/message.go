@@ -142,9 +142,11 @@ func MsgRegisterPong() *Message {
 	}
 }
 
-func MsgHeartbeat() *Message {
+func MsgHeartbeat(serverName, serverVersion string) *Message {
 
 	header := Header{
+		ServerName: serverName,
+		ServerVersion: serverVersion,
 		PayloadLen:   0,
 		MsgCodeType:  MsgCodeTypeKit,
 		ServerMethod: msgKitHeartbeat,

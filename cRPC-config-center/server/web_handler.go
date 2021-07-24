@@ -58,6 +58,8 @@ func (wh *WebHandler) GetConfig(c *gin.Context) {
 		return
 	}
 	// 查询订阅的服务的IP列表
+	// todo: 是否可以改成 client 注册到 ccs 后，通过 tcp 直接从 ccs 获取订阅的 服务的 IP
+	//
 	ssi, err := getServersIPList(ccAddr, sc.SubServers)
 	if err != nil {
 		logrus.Errorf("query sub infos err:[%v]", err)

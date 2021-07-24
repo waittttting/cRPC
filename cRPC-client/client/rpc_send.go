@@ -42,7 +42,7 @@ func (rc *RpcClient) createConnWithNodeInfo(nodeInfo string) {
 	}
 
 	receiveMsgChan := make(chan *tcp.Message, rc.localConfig.Server.ReceiveTcpMsgChanLen)
-	newSc := newServerConn(gid, conn, receiveMsgChan)
+	newSc := newServerConn(gid, conn, receiveMsgChan, rc)
 
 	sp := &serverPackage{
 		sc: &newSc,
@@ -60,5 +60,6 @@ func (rc *RpcClient) createConnWithNodeInfo(nodeInfo string) {
 		rc.subConnMap[gid.ServiceName] = subServerConns
 	}
 	newSc.StartLoop(true)
+
 	go handleMsg(receiveMsgChan)
 }

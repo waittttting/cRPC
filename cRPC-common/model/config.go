@@ -29,7 +29,7 @@ type ControlCenterAddr struct {
 
 type SubServerInfos struct {
 	ServerName string   `json:"server_name"`
-	Infos      []string `json:"infos"`
+	Infos      []string `json:"infos"` // gid 的 json 数组
 }
 
 type PortConfig struct {

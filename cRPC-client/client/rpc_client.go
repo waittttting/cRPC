@@ -85,7 +85,7 @@ func (rc *RpcClient) Start() {
 		ccsPort,
 		)
 
-	sc := newServerConn(*gid, conn, rc.receiveControlCenterMsgChan)
+	sc := newServerConn(*gid, conn, rc.receiveControlCenterMsgChan, rc)
 
 	rc.controlCenterConn = &sc
 	// 1.1 处理 control center 的消息
@@ -156,6 +156,29 @@ func (rc *RpcClient) createConnAndRegister(host string) (*tcp.Connection, error)
 	return conn, nil
 }
 
+func (rc *RpcClient) scLoopEnd(gid tcp.GID)  {
+
+	fmt.Println(" ------ scLoopEnd 1------ ")
+
+	if gid.ServiceName == controlCenterServiceName {
+		// todo
+	} else {
+		rc.scsLock.Lock()
+		defer rc.scsLock.Unlock()
+		fmt.Println(" ------ scLoopEnd 2 ------ ")
+		if servers, ok := rc.subConnMap[gid.ServiceName]; ok {
+			if sp, ok := servers[gid.String()]; ok {
+				close(sp.receiveMsgChan)
+				delete(servers, gid.String())
+				logrus.Infof(" server_conn close [%v]", gid.String())
+			} else {
+				logrus.Errorf("sp not find when server_conn loop over, server name = [%v]", gid.ServiceName)
+			}
+		} else {
+			logrus.Errorf("service map not find when server_conn loop over, server name = [%v]", gid.ServiceName)
+		}
+	}
+}
 
 // 开启 tcp 端口
 func (rc *RpcClient) startReceiveSocket() {

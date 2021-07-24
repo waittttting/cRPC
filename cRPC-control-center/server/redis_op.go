@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
+	"github.com/waittttting/cRPC-common/tcp"
 	"github.com/waittttting/cRPC-control-center/conf"
 )
 
@@ -27,6 +28,7 @@ func RedisInit(conf conf.CCSConf) {
 
 func RedisOp(key, value string, op redisOp) error {
 
+	// redis 单线程（线程安全）
 	var err error
 	switch op {
 	case redisOpSAddServerIp:
@@ -43,12 +45,16 @@ func RedisOp(key, value string, op redisOp) error {
 	return nil
 }
 
-const serverOnLinAndOffLine = "serverOnLinAndOffLine"
+const (
+	serverOnLinAndOffLine = "serverOnLinAndOffLine"
+	serviceOnLine = "1"
+	serviceOffLine = "2"
+)
 
 func RedisSubServerOnLine() (<-chan *redis.Message, error) {
 
 	pubSub := RedisCli.Subscribe(serverOnLinAndOffLine)
-	_, err :=pubSub.Receive()
+	_, err := pubSub.Receive()
 	if err != nil {
 		return nil, err
 	}
@@ -56,10 +62,23 @@ func RedisSubServerOnLine() (<-chan *redis.Message, error) {
 	return ch, nil
 }
 
-func RedisPubOnLine() {
-	RedisCli.Publish(serverOnLinAndOffLine, "1")
+type messageOfRedisMQ struct {
+	gid tcp.GID
+	onLineState string
 }
 
-func RedisPubOffline() {
-	RedisCli.Publish(serverOnLinAndOffLine, "2")
+func redisPubOnLine(gid *tcp.GID) {
+	mor := &messageOfRedisMQ{
+		gid: *gid,
+		onLineState: serviceOnLine,
+	}
+	RedisCli.Publish(serverOnLinAndOffLine, mor)
+}
+
+func redisPubOffline(gid *tcp.GID) {
+	mor := &messageOfRedisMQ{
+		gid: *gid,
+		onLineState: serviceOffLine,
+	}
+	RedisCli.Publish(serverOnLinAndOffLine, mor)
 }

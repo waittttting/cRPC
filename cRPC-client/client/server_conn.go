@@ -13,17 +13,25 @@ type serverConn struct {
 	// 是否断开 true 断开，false 未断开
 	exit bool
 	receiveMsgChan chan *tcp.Message
+	c client
+}
+
+type client interface {
+	scLoopEnd(gid tcp.GID)
 }
 
 func newServerConn(
 	gid tcp.GID,
 	connection *tcp.Connection,
-	msgChan chan *tcp.Message) serverConn {
+	msgChan chan *tcp.Message,
+	c client,
+	) serverConn {
 	
 	sc := serverConn{
 		gid: gid,
 		conn: connection,
 		receiveMsgChan: msgChan,
+		c: c,
 	}
 	return sc
 }
@@ -41,11 +49,10 @@ func (sc *serverConn) heartbeat() {
 	ticker := time.Tick(3 * time.Second)
 	for !sc.exit {
 		<- ticker
-		err := sc.conn.Send(tcp.MsgHeartbeat())
+		err := sc.conn.Send(tcp.MsgHeartbeat(sc.gid.ServiceName, sc.gid.ServiceVersion))
 		if err != nil {
 			logrus.Errorf("heartbeat err : [%v]", err)
 		}
-		logrus.Infof("...send heartbeat... [%v]", sc.gid.ServiceName)
 	}
 }
 
@@ -62,8 +69,8 @@ func (sc *serverConn) loop() {
 		if err != nil {
 			logrus.Errorf("receive msg in loop occurred err : %v", err)
 			sc.exit = true
+			continue
 		}
-		logrus.Infof("server_comm loop header: %s, %v", msg.Header.ServerName, msg.Header.ServerName)
 		timer := time.NewTimer( 2 * time.Second)
 		select {
 		case sc.receiveMsgChan <- msg:
@@ -72,4 +79,5 @@ func (sc *serverConn) loop() {
 		}
 	}
 	logrus.Infof("complete loop gid: %s", sc.gid.String())
+	sc.c.scLoopEnd(sc.gid)
 }

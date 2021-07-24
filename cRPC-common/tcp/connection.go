@@ -42,7 +42,7 @@ func (conn *Connection) Close() {
 
 func (conn *Connection) Send(msg *Message) error {
 
-	msgBuf := bytes.NewBuffer(make([]byte, 0, msgHeaderLength+msg.Header.PayloadLen))
+	msgBuf := bytes.NewBuffer(make([]byte, 0, msgHeaderLength + msg.Header.PayloadLen))
 
 	// header buf
 	headerBytes := transMsgToByte(msg)
